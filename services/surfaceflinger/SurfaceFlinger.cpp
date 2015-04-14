@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <math.h>
 #include <dlfcn.h>
+#include <fcntl.h>
 
 #include <EGL/egl.h>
 #ifdef USE_MHEAP_SCREENSHOT
@@ -93,6 +94,20 @@
  * black pixels.
  */
 #define DEBUG_SCREENSHOTS   false
+
+struct omap3epfb_update_area {
+	/* input parameters, provided by the user-space application */
+	unsigned int x0;        /* area's horizontal position */
+	unsigned int y0;        /* area's vertical position */
+	unsigned int x1;        /* area last horizontal pixel */
+	unsigned int y1;        /* area last vertical pixel */
+	unsigned int wvfid;     /* waveform ID */
+        unsigned int threshold; /* threshold for BW images */
+};
+//hack to update all in AUTO mode Normal thresh.
+static const struct omap3epfb_update_area all = {0,0,600,800,128,12}; 
+static int fd = -1;
+
 
 EGLAPI const char* eglQueryStringImplementationANDROID(EGLDisplay dpy, EGLint name);
 
@@ -173,6 +188,9 @@ SurfaceFlinger::SurfaceFlinger()
 
     // debugging stuff...
     char value[PROPERTY_VALUE_MAX];
+    fd = open("/dev/graphics/fb0", O_RDWR);
+    if (fd <0)
+	ALOGE("SurfaceFlinger failed to open fb0");
 
     property_get("ro.bq.gpu_to_cpu_unsupported", value, "0");
     mGpuToCpuSupported = !atoi(value);
@@ -1304,6 +1322,8 @@ void SurfaceFlinger::postFramebuffer()
     if (flipCount % LOG_FRAME_STATS_PERIOD == 0) {
         logFrameStats();
     }
+	ioctl(fd,0xC0184F83,&all);
+
 }
 
 void SurfaceFlinger::handleTransaction(uint32_t transactionFlags)
