@@ -105,7 +105,9 @@ struct omap3epfb_update_area {
         unsigned int threshold; /* threshold for BW images */
 };
 //hack to update all in AUTO mode Normal thresh.
-static const struct omap3epfb_update_area all = {0,0,600,800,128,12}; 
+static const struct omap3epfb_update_area all = {0,0,600,800,256,0};
+static struct omap3epfb_update_area area = {0,0,600,800,256,0};
+
 static int fd = -1;
 
 
@@ -944,6 +946,7 @@ void SurfaceFlinger::onMessageReceived(int32_t what) {
         break;
     case MessageQueue::REFRESH:
         handleMessageRefresh();
+	ioctl(fd,0xC0184F83,&area);
         break;
     }
 }
@@ -1259,6 +1262,13 @@ void SurfaceFlinger::doComposition() {
             // transform the dirty region into this screen's coordinate space
             const Region dirtyRegion(hw->getDirtyRegion(repaintEverything));
 
+            //pass dirty region bounds to omap3epfb driver
+            Rect dirtyRegionBounds = dirtyRegion.getBounds();
+            area.x0 = dirtyRegionBounds.left;
+            area.y0 = dirtyRegionBounds.top;
+            area.x1 = dirtyRegionBounds.width();
+            area.y1 = dirtyRegionBounds.height();
+
             // repaint the framebuffer (if needed)
             doDisplayComposition(hw, dirtyRegion);
 
@@ -1322,7 +1332,6 @@ void SurfaceFlinger::postFramebuffer()
     if (flipCount % LOG_FRAME_STATS_PERIOD == 0) {
         logFrameStats();
     }
-	ioctl(fd,0xC0184F83,&all);
 
 }
 
