@@ -472,9 +472,9 @@ status_t SurfaceFlinger::selectEGLConfig(EGLDisplay display, EGLint nativeVisual
         attribs[EGL_RECORDABLE_ANDROID]         = EGL_TRUE;
         attribs[EGL_SURFACE_TYPE]               = EGL_WINDOW_BIT|EGL_PBUFFER_BIT;
         attribs[EGL_FRAMEBUFFER_TARGET_ANDROID] = EGL_TRUE;
-        attribs[EGL_RED_SIZE]                   = 8;
-        attribs[EGL_GREEN_SIZE]                 = 8;
-        attribs[EGL_BLUE_SIZE]                  = 8;
+        attribs[EGL_RED_SIZE]                   = 5;
+        attribs[EGL_GREEN_SIZE]                 = 6;
+        attribs[EGL_BLUE_SIZE]                  = 5;
         wantedAttribute                         = EGL_NONE;
         wantedAttributeValue                    = EGL_NONE;
 
@@ -946,7 +946,7 @@ void SurfaceFlinger::onMessageReceived(int32_t what) {
         break;
     case MessageQueue::REFRESH:
         handleMessageRefresh();
-	ioctl(fd,0xC0184F83,&area);
+	ioctl(fd,0xC0184F83,&area); //or all
         break;
     }
 }
@@ -1266,8 +1266,8 @@ void SurfaceFlinger::doComposition() {
             Rect dirtyRegionBounds = dirtyRegion.getBounds();
             area.x0 = dirtyRegionBounds.left;
             area.y0 = dirtyRegionBounds.top;
-            area.x1 = dirtyRegionBounds.width();
-            area.y1 = dirtyRegionBounds.height();
+            area.x1 = dirtyRegionBounds.left + dirtyRegionBounds.width();
+            area.y1 = dirtyRegionBounds.top  + dirtyRegionBounds.height();
 
             // repaint the framebuffer (if needed)
             doDisplayComposition(hw, dirtyRegion);
