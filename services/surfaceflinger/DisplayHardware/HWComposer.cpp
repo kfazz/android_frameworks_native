@@ -293,10 +293,18 @@ HWComposer::HWComposer(
         disp.format = mFbDev->format;
         disp.xdpi = mFbDev->xdpi;
         disp.ydpi = mFbDev->ydpi;
+#if 1
+        if (disp.refresh == 0) {
+            disp.refresh = nsecs_t(1e9 / 20.0);
+            ALOGW("faking VSYNC period from thin air: %lld",
+                    mDisplayData[HWC_DISPLAY_PRIMARY].refresh);
+        }
+#else
         if (disp.refresh == 0) {
             disp.refresh = nsecs_t(1e9 / mFbDev->fps);
             ALOGW("getting VSYNC period from fb HAL: %lld", disp.refresh);
         }
+#endif
         if (disp.refresh == 0) {
             disp.refresh = nsecs_t(1e9 / 60.0);
             ALOGW("getting VSYNC period from thin air: %lld",
