@@ -1261,13 +1261,14 @@ void SurfaceFlinger::doComposition() {
         if (hw->canDraw()) {
             // transform the dirty region into this screen's coordinate space
             const Region dirtyRegion(hw->getDirtyRegion(repaintEverything));
-
+#if 0
             //pass dirty region bounds to omap3epfb driver
             Rect dirtyRegionBounds = dirtyRegion.getBounds();
             area.x0 = dirtyRegionBounds.left;
             area.y0 = dirtyRegionBounds.top;
             area.x1 = dirtyRegionBounds.left + dirtyRegionBounds.width();
             area.y1 = dirtyRegionBounds.top  + dirtyRegionBounds.height();
+#endif
 
             // repaint the framebuffer (if needed)
             doDisplayComposition(hw, dirtyRegion);
@@ -1984,9 +1985,20 @@ void SurfaceFlinger::doDisplayComposition(const sp<const DisplayDevice>& hw,
 #endif
 
     Region dirtyRegion(inDirtyRegion);
+    Region epdRegion(inDirtyRegion);
 
     // compute the invalid region
     hw->swapRegion.orSelf(dirtyRegion);
+    hw->swapRegion.orSelf(epdRegion);
+    epdRegion.set(hw->swapRegion.bounds());
+
+    //pass dirty region bounds to omap3epfb driver
+    Rect dirtyRegionBounds = epdRegion.getBounds();
+    area.x0 = dirtyRegionBounds.left;
+    area.y0 = dirtyRegionBounds.top;
+    area.x1 = dirtyRegionBounds.left + dirtyRegionBounds.width();
+    area.y1 = dirtyRegionBounds.top  + dirtyRegionBounds.height();
+
 
     uint32_t flags = hw->getFlags();
     if (flags & DisplayDevice::SWAP_RECTANGLE) {
